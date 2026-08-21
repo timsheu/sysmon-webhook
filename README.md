@@ -13,7 +13,7 @@ curl -fsSL https://raw.githubusercontent.com/timsheu/sysmon-webhook/94caca3661ad
 
 **是**：資源監控。定期回報 CPU、記憶體、Swap、磁碟用量、inode 用量與系統負載，超過門檻時發紅色告警。
 
-**不是**：服務健康監控。一個服務可以完全死掉，而上述指標全部正常——資料庫拒絕新連線、API 回 500、容器顯示 `Up` 但裡面的行程早已無法工作，這些都不會讓 CPU 或磁碟出現異常。那類事故需要的是 HTTP／TCP 探測或應用層的健康檢查端點，本工具不涵蓋。
+**不是**：服務健康監控。一個服務可以完全死掉，而上述指標全部正常——資料庫拒絕新連線、API 回 500、容器顯示 `Up` 但裡面的行程早已無法工作，這些都不會讓 CPU 或磁碟出現異常。那類事故得靠 HTTP／TCP 探測，或應用層的健康檢查端點才抓得到——本工具不涵蓋。
 
 把兩者當成互補而非替代，否則會誤以為缺口已經補上。
 
@@ -52,11 +52,11 @@ curl -fsSL https://raw.githubusercontent.com/timsheu/sysmon-webhook/94caca3661ad
   | sudo bash -s -- --webhook "https://discord.com/api/webhooks/xxx/yyy" --name db-01
 ```
 
-這個寫法會把 webhook URL 留在三個地方：使用者的 shell history、`/var/log/auth.log`（sudo 會記錄完整命令列）、以及安裝當下任何本機使用者都看得到的 `ps` 輸出。Discord webhook 等同一把不需認證就能發文的金鑰，取得的人可以無限量往你的頻道貼東西。安裝器在結束時會提醒這件事。
+這個寫法會把 webhook URL 留在三個地方：使用者的 shell history、`/var/log/auth.log`（sudo 會記錄完整命令列）、以及安裝當下任何本機使用者都看得到的 `ps` 輸出。Discord webhook 等同一把不必認證就能發文的金鑰——誰拿到，都能對著你的頻道無限洗版。安裝器結束時會提醒這件事。
 
 ### 關於網址裡的 `<COMMIT_SHA>`
 
-請釘住 commit SHA，不要用 `main`。`main` 是可變目標——repo 一旦被推入惡意 commit，所有機器下次重裝就會直接以 root 執行它。另外 `raw.githubusercontent.com` 有數分鐘的 CDN 快取，剛推上去的修改不會立即生效，排錯時容易被這點誤導。
+請釘住 commit SHA，不要用 `main`。`main` 是可變目標——repo 一旦被推入惡意 commit，所有機器下次重跑安裝指令就會直接以 root 執行它。另外 `raw.githubusercontent.com` 有數分鐘的 CDN 快取，剛推上去的修改不會立即生效，排錯時容易被這點誤導。
 
 ---
 
@@ -78,7 +78,7 @@ curl -fsSL https://raw.githubusercontent.com/timsheu/sysmon-webhook/94caca3661ad
 | `--recovery-margin <%>` | 5 | 遲滯範圍，見下方說明 |
 | `--report-mode <mode>` | `always` | `always` 每次都回報，`alert_only` 僅在異常與恢復時回報 |
 | `--heartbeat-url <url>` | — | 每次執行成功後 ping 一次的 URL |
-| `--no-test` | — | 安裝後不發送測試訊息 |
+| `--no-test` | — | 安裝後不傳送測試訊息 |
 | `--uninstall` | — | 移除 timer、service 與腳本，保留設定檔 |
 | `--uninstall --purge` | — | 連設定檔與狀態一併移除 |
 | `--print-monitor` | — | 印出將被安裝的監控腳本（安裝前審閱用） |
@@ -146,16 +146,16 @@ healthchecks.io、Uptime Kuma 的 push monitor 都適用。**強烈建議設定*
 
 ## systemd 硬化與它的副作用
 
-service 會依目標機器的 systemd 版本套用對應的硬化選項（v232 以上用 `ProtectSystem=strict`，較舊版本退回 `ProtectSystem=full`）。舊版 systemd 對不認識的設定鍵只會警告並忽略，但那些警告每次觸發都會刷 journal，所以安裝器會先偵測版本再決定寫入哪些。
+service 會依照目標機器的 systemd 版本，套用對應的硬化選項（v232 以上用 `ProtectSystem=strict`，較舊版本退回 `ProtectSystem=full`）。舊版 systemd 對不認識的設定鍵只會警告並忽略，但那些警告每次觸發都會刷 journal，所以安裝器會先偵測版本再決定寫入哪些。
 
-**`PrivateTmp=yes` 會影響 `/tmp` 的量測。** 這個選項讓 service 看到的是私有的 tmpfs，而不是真實的 `/tmp`。若你需要監控真實 `/tmp` 的用量，請改監控它所在的檔案系統（通常是 `/`），或自行移除 service 檔中的該行後 `systemctl daemon-reload`。其餘掛載點（含 `/home`、`/var/lib/docker`）不受影響——`ProtectHome=read-only` 保留掛載點可見，`df` 讀到的仍是真實數據。
+**`PrivateTmp=yes` 會影響 `/tmp` 的量測。** 這個選項讓 service 看到的是私有的 tmpfs，而不是真實的 `/tmp`。若你需要監控真實 `/tmp` 的用量，請改監控它所在的檔案系統（通常是 `/`），或自行移除 service 檔中的該行後 `systemctl daemon-reload`。其餘掛載點（含 `/home`、`/var/lib/docker`）不受影響——`ProtectHome=read-only` 保留掛載點可見，`df` 讀到的仍是真實資料。
 
 ---
 
 ## 安全性
 
 - **設定檔** `/etc/sysmon-webhook/config.env` 權限 `600`、root 擁有，先建檔收權限再寫入內容，webhook URL 不會有以寬鬆權限落地的空窗。
-- **webhook URL 會被格式驗證。** 設定檔由 shell `source` 讀取，未經驗證的值等同一條 root 權限的命令注入路徑；值另以 `printf %q` 跳脫後寫入，構成第二道防線。
+- **webhook URL 會被格式驗證。** 設定檔由 shell `source` 讀取——值若未經驗證，就等同開了一條 root 權限的命令注入路徑；另以 `printf %q` 跳脫後寫入，構成第二道防線。
 - **`--name` 限定安全字元集**，避免產生無效 JSON（Discord 會回 400，而重試五次都不會變好，等於靜默失去這次告警）。
 - **暫存檔用 `mktemp`**，不使用可預測的 `/tmp/xxx.$$` 檔名，避免 symlink 攻擊。
 
