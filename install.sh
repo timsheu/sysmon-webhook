@@ -9,19 +9,19 @@
 # 安裝方式（依安全性由高到低）
 #
 #   1) 驗證 checksum 後再執行（正式機器建議用這個）：
-#      curl -fsSL -o install.sh https://raw.githubusercontent.com/timsheu/sysmon-webhook/<COMMIT_SHA>/install.sh
-#      echo "<sha256>  install.sh" | sha256sum -c -
+#      curl -fsSL -o install.sh https://raw.githubusercontent.com/timsheu/sysmon-webhook/94caca3661ad5ce0526bd3cc9bd577aaba4e3e8c/install.sh
+#      echo "56b0830267025377ea368868a529e6afebc61a0fe6a0127330aaca59c094a5b6  install.sh" | sha256sum -c -
 #      sudo bash install.sh --webhook-file /root/webhook.txt --name db-01
 #
 #   2) webhook 從檔案讀，不進 shell history 也不進 sudo 日誌：
 #      printf '%s\n' 'https://discord.com/api/webhooks/xxx/yyy' > /root/webhook.txt
 #      chmod 600 /root/webhook.txt
-#      curl -fsSL https://raw.githubusercontent.com/timsheu/sysmon-webhook/<COMMIT_SHA>/install.sh \
+#      curl -fsSL https://raw.githubusercontent.com/timsheu/sysmon-webhook/94caca3661ad5ce0526bd3cc9bd577aaba4e3e8c/install.sh \
 #        | sudo bash -s -- --webhook-file /root/webhook.txt --name db-01
 #
 #   3) 純參數（最短，但 webhook URL 會留在 ~/.bash_history、/var/log/auth.log
 #      的 sudo 記錄，以及安裝當下的 ps 輸出——僅建議用於測試機）：
-#      curl -fsSL https://raw.githubusercontent.com/timsheu/sysmon-webhook/<COMMIT_SHA>/install.sh \
+#      curl -fsSL https://raw.githubusercontent.com/timsheu/sysmon-webhook/94caca3661ad5ce0526bd3cc9bd577aaba4e3e8c/install.sh \
 #        | sudo bash -s -- --webhook "https://discord.com/api/webhooks/xxx/yyy" --name db-01
 #
 # 網址請釘 commit SHA 而非 main：main 是可變目標，repo 一旦被推入惡意 commit，

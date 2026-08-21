@@ -3,7 +3,7 @@
 Linux 系統資源監控，透過 Discord webhook 定期回報。單一檔案安裝、以 systemd timer 排程、沒有任何外部相依套件。
 
 ```
-curl -fsSL https://raw.githubusercontent.com/timsheu/sysmon-webhook/<COMMIT_SHA>/install.sh \
+curl -fsSL https://raw.githubusercontent.com/timsheu/sysmon-webhook/94caca3661ad5ce0526bd3cc9bd577aaba4e3e8c/install.sh \
   | sudo bash -s -- --webhook-file /root/webhook.txt --name db-01
 ```
 
@@ -27,12 +27,13 @@ curl -fsSL https://raw.githubusercontent.com/timsheu/sysmon-webhook/<COMMIT_SHA>
 
 ```bash
 curl -fsSL -o install.sh \
-  https://raw.githubusercontent.com/timsheu/sysmon-webhook/<COMMIT_SHA>/install.sh
-echo "<sha256>  install.sh" | sha256sum -c -
+  https://raw.githubusercontent.com/timsheu/sysmon-webhook/94caca3661ad5ce0526bd3cc9bd577aaba4e3e8c/install.sh
+echo "56b0830267025377ea368868a529e6afebc61a0fe6a0127330aaca59c094a5b6  install.sh" | sha256sum -c -
 sudo bash install.sh --webhook-file /root/webhook.txt --name db-01
 ```
 
-每個 release 的 sha256 值請見 Releases 頁面。
+上面指令裡的 sha256 已對應到所釘的 commit SHA；換釘其他 commit 時，checksum 請自行以
+`sha256sum install.sh` 重新計算，不要沿用這個值。
 
 ### 二、webhook 從檔案讀（一行安裝，但不外洩 webhook）
 
@@ -40,14 +41,14 @@ sudo bash install.sh --webhook-file /root/webhook.txt --name db-01
 printf '%s\n' 'https://discord.com/api/webhooks/xxx/yyy' > /root/webhook.txt
 chmod 600 /root/webhook.txt
 
-curl -fsSL https://raw.githubusercontent.com/timsheu/sysmon-webhook/<COMMIT_SHA>/install.sh \
+curl -fsSL https://raw.githubusercontent.com/timsheu/sysmon-webhook/94caca3661ad5ce0526bd3cc9bd577aaba4e3e8c/install.sh \
   | sudo bash -s -- --webhook-file /root/webhook.txt --name db-01
 ```
 
 ### 三、純參數（最短，僅建議用於測試機）
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/timsheu/sysmon-webhook/<COMMIT_SHA>/install.sh \
+curl -fsSL https://raw.githubusercontent.com/timsheu/sysmon-webhook/94caca3661ad5ce0526bd3cc9bd577aaba4e3e8c/install.sh \
   | sudo bash -s -- --webhook "https://discord.com/api/webhooks/xxx/yyy" --name db-01
 ```
 
