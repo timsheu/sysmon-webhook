@@ -1,0 +1,54 @@
+name: shellcheck
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  # shellcheck 的診斷訊息含中文，沒有 UTF-8 locale 會在輸出時中斷
+  LC_ALL: C.UTF-8
+  LANG: C.UTF-8
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安裝 shellcheck
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+
+      - name: 語法檢查
+        run: bash -n install.sh && bash -n tests/e2e.sh
+
+      # -S warning：style 與 info 級別的建議不擋 CI，warning 以上才算失敗
+      - name: shellcheck install.sh
+        run: shellcheck -S warning install.sh
+
+      # 監控腳本與失敗通報腳本以 heredoc 內嵌在 install.sh 裡，
+      # shellcheck 只會把它們當字串。抽出來單獨檢查，否則這兩支的問題永遠不會被 CI 抓到。
+      - name: shellcheck 內嵌腳本
+        run: |
+          bash install.sh --print-monitor > /tmp/sysmon-webhook.sh
+          bash install.sh --print-failure > /tmp/sysmon-webhook-failure.sh
+          bash -n /tmp/sysmon-webhook.sh
+          bash -n /tmp/sysmon-webhook-failure.sh
+          shellcheck -S warning /tmp/sysmon-webhook.sh
+          shellcheck -S warning /tmp/sysmon-webhook-failure.sh
+
+      - name: shellcheck tests
+        run: shellcheck -S warning tests/e2e.sh
+
+  e2e:
+    runs-on: ubuntu-latest
+    container:
+      image: debian:bookworm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安裝測試相依
+        run: apt-get update -qq && apt-get install -y -qq curl python3
+
+      - name: 端到端測試（systemctl 由假腳本取代，不會真的啟用 timer）
+        run: bash tests/e2e.sh
